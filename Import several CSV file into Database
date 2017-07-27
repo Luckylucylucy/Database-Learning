@@ -20,14 +20,13 @@ CREATE TABLE #DirectoryTree2(  --this is the table storing all the filenames und
 INSERT INTO #DirectoryTree2 EXEC xp_dirtree 'D:\try',1,1 --this is for getting all the filenames under the directory, depth 1, both file and folder
 
 --cursor loop
-declare c1 cursor for SELECT fname FROM #DirectoryTree2 where fname like '%.csv%'
-open c1
-fetch next from c1 into @fn
+DECLARE c1 CURSOR FOR SELECT fname FROM #DirectoryTree2 WHERE fname like '%.csv%'
+OPEN c1
+FETCH NEXT FROM c1 INTO @fn
 While @@fetch_status <> -1
-     begin
+     BEGIN
      
      SET @path=@dir+@fn 
-     
      SET @fn=REPLACE(@fn,'.csv','')  --it seems sql sentence doesn't accept table name containing the '.' or '_'
      SET @fn=REPLACE(@fn,'-','')
     
@@ -38,15 +37,14 @@ While @@fetch_status <> -1
 	 EXEC(@sql)
 	 
      --import file from path into the table	 
-     set @sql = 'BULK INSERT try.dbo.'+@fn+' FROM ''' + @path + ''' '
-           + '     WITH ( 
+     SET @sql = 'BULK INSERT try.dbo.'+@fn+' FROM ''' + @path + ''' WITH ( 
                    FIELDTERMINATOR = '','', 
                    ROWTERMINATOR = ''\n'', 
                    FIRSTROW = 2 
                 ) '
      EXEC(@sql)
      
-     fetch next from c1 into @fn
-     end
-close c1
-deallocate c1
+     FETCH NEXT FROM c1 INTO @fn
+     END
+CLOSE c1
+DEALLOCATE c1
