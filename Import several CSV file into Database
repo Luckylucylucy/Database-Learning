@@ -1,0 +1,51 @@
+DECLARE @dir VARCHAR(100)
+DECLARE @fn VARCHAR(100)
+DECLARE @path VARCHAR(200)
+DECLARE @ID int
+DECLARE @judge int
+DECLARE @sql VARCHAR(MAX)
+
+SET @dir='D:\try\卡口数据-2017-04-12的数据\'
+SET @path=''
+
+IF OBJECT_ID('tempdb..#DirectoryTree2') IS NOT NULL
+   DROP TABLE #DirectoryTree2;
+
+CREATE TABLE #DirectoryTree2(
+       id int IDENTITY(1,1)
+      ,fname VARCHAR(100)
+      ,d int
+      ,f int);
+     
+INSERT INTO #DirectoryTree2 EXEC xp_dirtree 'D:\try\卡口数据-2017-04-12的数据',1,1
+
+--cursor loop
+declare c1 cursor for SELECT fname FROM #DirectoryTree2 where fname like '%.csv%'
+open c1
+fetch next from c1 into @fn
+While @@fetch_status <> -1
+     begin
+     
+     SET @path=@dir+@fn
+     
+     SET @fn=REPLACE(@fn,'.csv','')
+     SET @fn=REPLACE(@fn,'-','')
+     
+     SET @sql='CREATE TABLE [try].[dbo].'+@fn+'
+	 (
+	 ID VARCHAR(50),JLBH VARCHAR(50),HPHM VARCHAR(50),HPZL VARCHAR(50),JGSJ VARCHAR(50),CLSD VARCHAR(50),ZGXS VARCHAR(50),ZDXS VARCHAR(50),CWKC VARCHAR(50),HPYS VARCHAR(50),CLLX VARCHAR(50),JLLX VARCHAR(50),HDSJ VARCHAR(50),BZWZDM VARCHAR(50),SBBH VARCHAR(50),CDBH VARCHAR(50),FXBH VARCHAR(50),TPSL VARCHAR(50),ZFBJ VARCHAR(50),SJLY VARCHAR(50),CCLX VARCHAR(50),BZ VARCHAR(200),CSYS VARCHAR(50),JLLB VARCHAR(50),XSFX VARCHAR(50),CSBJ VARCHAR(50),TPLX VARCHAR(50),XRSJ VARCHAR(50),DEALTIME1 VARCHAR(50),DEALTIME2 VARCHAR(50),DEALTIME3 VARCHAR(50),DEALTIME4 VARCHAR(50),TXFS VARCHAR(50),WFDM VARCHAR(50)
+	 )'
+	 EXEC(@sql)
+	 
+	 set @sql = 'BULK INSERT try.dbo.'+@fn+' FROM ''' + @path + ''' '
+           + '     WITH ( 
+                   FIELDTERMINATOR = '','', 
+                   ROWTERMINATOR = ''\n'', 
+                   FIRSTROW = 2 
+                ) '
+	 EXEC(@sql)
+	 
+	 fetch next from c1 into @fn
+     end
+close c1
+deallocate c1
